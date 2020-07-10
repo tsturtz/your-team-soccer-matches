@@ -1,0 +1,28 @@
+{
+  "name": "fav_soccer_team_matches",
+  "version": "1.0.0",
+  "description": "Bitbar plugin for viewing your favorite soccer team's upcoming matches and recent scores.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'No tests yet 😢'",
+    "build": "parcel build index.js --no-minify --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && echo \"#!/usr/bin/env /usr/local/bin/node\"|cat - ../fav_soccer_team_matches.10m.js > /tmp/out && mv /tmp/out ../fav_soccer_team_matches.10m.js && chmod +x ../fav_soccer_team_matches.10m.js"
+  },
+  "keywords": [
+    "soccer",
+    "bitbar",
+    "team",
+    "matches",
+    "premier",
+    "league",
+    "epl",
+    "world",
+    "cup",
+    "pl"
+  ],
+  "author": "Taylor Sturtz",
+  "license": "MIT",
+  "dependencies": {
+    "bitbar": "^1.3.1",
+    "parcel-bundler": "^1.12.4"
+  }
+}
