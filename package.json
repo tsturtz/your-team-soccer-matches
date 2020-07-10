@@ -5,10 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo 'No tests yet 😢'",
-    "build": "parcel build index.js --target node --bundle-node-modules --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && npm run add-shebang && npm run chmod",
-    "debug": "parcel build index.js --target node --bundle-node-modules --detailed-report --no-minify --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && npm run add-shebang && npm run chmod",
-    "add-shebang": "echo \"#!/usr/bin/env /usr/local/bin/node\"|cat - ../fav_soccer_team_matches.10m.js > /tmp/out && mv /tmp/out ../fav_soccer_team_matches.10m.js",
-    "chmod": "chmod +x ../fav_soccer_team_matches.10m.js"
+    "build": "parcel build index.js --target node --bundle-node-modules --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && ./postBuild.sh",
+    "build:debug": "parcel build index.js --target node --bundle-node-modules --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js --detailed-report --no-minify && ./postBuild.sh"
   },
   "keywords": [
     "soccer",
