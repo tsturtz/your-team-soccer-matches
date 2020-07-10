@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo 'No tests yet 😢'",
-    "build": "parcel build index.js --no-minify --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && echo \"#!/usr/bin/env /usr/local/bin/node\"|cat - ../fav_soccer_team_matches.10m.js > /tmp/out && mv /tmp/out ../fav_soccer_team_matches.10m.js && chmod +x ../fav_soccer_team_matches.10m.js"
+    "build": "parcel build index.js --target node --bundle-node-modules --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && npm run add-shebang && npm run chmod",
+    "debug": "parcel build index.js --target node --bundle-node-modules --detailed-report --no-minify --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && npm run add-shebang && npm run chmod",
+    "add-shebang": "echo \"#!/usr/bin/env /usr/local/bin/node\"|cat - ../fav_soccer_team_matches.10m.js > /tmp/out && mv /tmp/out ../fav_soccer_team_matches.10m.js",
+    "chmod": "chmod +x ../fav_soccer_team_matches.10m.js"
   },
   "keywords": [
     "soccer",
@@ -23,6 +26,8 @@
   "license": "MIT",
   "dependencies": {
     "bitbar": "^1.3.1",
+    "date-fns": "^2.14.0",
+    "node-fetch": "^2.6.0",
     "parcel-bundler": "^1.12.4"
   }
 }
