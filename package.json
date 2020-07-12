@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo 'No tests yet 😢'",
-    "build": "parcel build index.js --target node --bundle-node-modules --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js && ./postBuild.sh",
-    "build:debug": "parcel build index.js --target node --bundle-node-modules --no-source-maps --out-dir ../ --out-file fav_soccer_team_matches.10m.js --detailed-report --no-minify && ./postBuild.sh"
+    "dev": "parcel build index.js --out-dir ./temp --target node --bundle-node-modules --no-cache --no-source-maps --no-minify --detailed-report && ./postDevBuild.sh",
+    "build": "parcel build index.js --out-dir ./build --target node --no-source-maps --no-minify --detailed-report && ./postProdBuild.sh"
   },
   "keywords": [
     "soccer",
