@@ -19,7 +19,6 @@
 //   - FOOTBALL_DATA_API_KEY: Plug your API key you just got in here.
 //   - TEAM_ID: You must provide a team ID or it will default to my team, Tottenham 😎.
 //     - Use the a dictionary of *some* teams and their IDs below to find your team's ID.
-//   - TEAM_COLOR_HEX: Insert a hex color for your team!
 //   - NUMBER_OF_FINISHED_MATCHES: Retrieve and display how many finished matches?
 //   - NUMBER_OF_SCHEDULED_MATCHES: Retrieve and display how many scheduled matches?
 
@@ -42,8 +41,6 @@ const MISC_LEAGUE_TEAM_IDS = { AIK_Fotboll: 5277, APOEL: 752, Astana_FK: 1884, B
 const USER_OPTIONS = {
   FOOTBALL_DATA_API_KEY: 'c502bdfa2bfb401f8a13bcf240ae9c47',
   TEAM_ID: ENGLISH_LEAGUE_TEAM_IDS.Tottenham_Hotspur,
-  TEAM_COLOR_HEX_LIGHT_BG: '#132257',
-  TEAM_COLOR_HEX_DARK_BG: '#fff',
   NUMBER_OF_FINISHED_MATCHES: 5,
   NUMBER_OF_SCHEDULED_MATCHES: 3,
 };
@@ -184,15 +181,12 @@ const fetch = require('node-fetch').default;
 
 const {
   format,
-  parseISO,
-  subYears
+  parseISO
 } = require('date-fns');
 
 const OPTIONS = {
   FOOTBALL_DATA_API_KEY: USER_OPTIONS && USER_OPTIONS.FOOTBALL_DATA_API_KEY,
   TEAM_ID: USER_OPTIONS && USER_OPTIONS.TEAM_ID || 73,
-  TEAM_COLOR_HEX_LIGHT_BG: USER_OPTIONS && USER_OPTIONS.TEAM_COLOR_HEX_LIGHT_BG || '#132257',
-  TEAM_COLOR_HEX_DARK_BG: USER_OPTIONS && USER_OPTIONS.TEAM_COLOR_HEX_DARK_BG || '#fff',
   NUMBER_OF_FINISHED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_FINISHED_MATCHES || 4,
   NUMBER_OF_SCHEDULED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_SCHEDULED_MATCHES || 3
 };
@@ -218,41 +212,15 @@ const OPTIONS = {
     activeCompetitionsStandingsRender = [...activeCompetitionsStandingsRender, {
       text: comp.competition.name,
       href: `https://www.google.com/search?q=${comp.competition.name.split(' ').join('+')}`,
-      color: bitbar.darkMode ? 'white' : 'black',
       size: 14,
       submenu: comp.standings.map(standing => ({
         text: standing.stage === 'GROUP_STAGE' ? standing.group : standing.stage,
-        color: bitbar.darkMode ? 'white' : 'black',
         size: 14,
         submenu: [{
           text: 'Pos. Team - Points'
-        }, ...standing.table.map((table, idx) => {
-          let color = bitbar.darkMode ? 'white' : 'black'; // If Premier League
-
-          if (comp.competition.id === 2021) {
-            if (idx === 0) {
-              color = '#00b800';
-            } else if (idx > 0 && idx < 4) {
-              color = 'green';
-            } else if (idx === 4) {
-              color = '#c2bf00';
-            } else if (idx > 16) {
-              color = 'red';
-            }
-          } // If Champions League
-
-
-          if (comp.competition.id === 2001) {
-            if (idx < 2) {
-              color = 'green';
-            } else {
-              color = 'red';
-            }
-          }
-
+        }, bitbar.separator, ...standing.table.map((table, idx) => {
           return _objectSpread({
-            text: `${table.position}. ${table.team.name} - ${table.points}`,
-            color
+            text: `${table.position}. ${table.team.name} - ${table.points}`
           }, table.team.id === OPTIONS.TEAM_ID && {
             font: 'Helvetica-Bold'
           });
@@ -260,115 +228,125 @@ const OPTIONS = {
       }))
     }];
   }); // Get finished matches
+  // NOTE: I would limit the API request to the requested number of finished matches
+  // but there's no way to get the 4 most recent completed games.
 
-  const finishedMatchesResponse = await fetch(`${apiUrl}/teams/${OPTIONS.TEAM_ID}/matches?status=FINISHED&limit=${OPTIONS.NUMBER_OF_FINISHED_MATCHES}&dateFrom=${format(subYears(new Date(), 1), "yyyy-MM-dd")}&dateTo=${format(new Date(), "yyyy-MM-dd")}`, apiData);
+  const finishedMatchesResponse = await fetch(`${apiUrl}/teams/${OPTIONS.TEAM_ID}/matches?status=FINISHED`, apiData);
   const finishedMatches = await finishedMatchesResponse.json();
   let finishedMatchesRender = [];
-  finishedMatches.matches.forEach(match => {
-    // Determine winner
-    let winningTeamName = 'Draw';
 
-    if (match.score.winner === 'HOME_TEAM') {
-      winningTeamName = match.homeTeam.name;
-    } else if (match.score.winner === 'AWAY_TEAM') {
-      winningTeamName = match.awayTeam.name;
-    }
+  if (finishedMatches.matches) {
+    finishedMatches.matches.forEach((match, idx) => {
+      if (idx >= finishedMatches.matches.length - OPTIONS.NUMBER_OF_FINISHED_MATCHES) {
+        // Determine winner
+        const isDraw = match.score.winner === 'DRAW';
+        let winningTeamName = 'Draw';
 
-    const myTeamWon = winningTeamName === myTeam.name; // Check if there was extra time
+        if (match.score.winner === 'HOME_TEAM') {
+          winningTeamName = match.homeTeam.name;
+        } else if (match.score.winner === 'AWAY_TEAM') {
+          winningTeamName = match.awayTeam.name;
+        }
 
-    const showExtraTime = match.score.extraTime.homeTeam || match.score.extraTime.awayTeam; // Check if there were penalties
+        const myTeamWon = winningTeamName === myTeam.name; // Check if there was extra time
 
-    const showPenalties = match.score.penalties.homeTeam || match.score.penalties.awayTeam; // Render regular scores
+        const showExtraTime = match.score.extraTime.homeTeam || match.score.extraTime.awayTeam; // Check if there were penalties
 
-    const regularScoreRender = `(${match.score.fullTime.homeTeam} - ${match.score.fullTime.awayTeam})`; // Render extra time scores
+        const showPenalties = match.score.penalties.homeTeam || match.score.penalties.awayTeam; // Render regular scores
 
-    const extraTimeRender = `(ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`; // Render extra time scores
+        const regularScoreRender = `${match.score.fullTime.homeTeam} - ${match.score.fullTime.awayTeam}`; // Render extra time scores
 
-    const penaltiesRender = `(Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
-    finishedMatchesRender = [...finishedMatchesRender, {
-      text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
-      color: bitbar.darkMode ? 'white' : 'black',
-      size: 14,
-      href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
-    }, {
-      text: `‣ ${winningTeamName} ${regularScoreRender} ${showExtraTime ? extraTimeRender : ''} ${showPenalties ? penaltiesRender : ''}`,
-      color: myTeamWon ? 'green' : winningTeamName === 'Draw' ? '' : 'red',
-      size: 12
-    }];
-  }); // Get scheduled matches
+        const extraTimeRender = ` (ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`; // Render extra time scores
+
+        const penaltiesRender = ` (Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
+        finishedMatchesRender = [...finishedMatchesRender, {
+          text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
+          size: 14,
+          href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
+        }, {
+          text: `${myTeamWon ? '🟢' : isDraw ? '⚪️' : '🔴'} ${regularScoreRender}${showExtraTime ? extraTimeRender : ''}${showPenalties ? penaltiesRender : ''} ${!isDraw ? winningTeamName : 'Draw'}`,
+          size: 14
+        }];
+      }
+    });
+  } // Get scheduled matches
+
 
   const scheduledMatchesResponse = await fetch(`${apiUrl}/teams/${OPTIONS.TEAM_ID}/matches?status=SCHEDULED&limit=${OPTIONS.NUMBER_OF_SCHEDULED_MATCHES}`, apiData);
   const scheduledMatches = await scheduledMatchesResponse.json();
   let scheduledMatchesRender = [];
-  scheduledMatches.matches.forEach(match => {
-    scheduledMatchesRender = [...scheduledMatchesRender, {
-      text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
-      color: bitbar.darkMode ? 'white' : 'black',
-      size: 14,
-      href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
-    }, {
-      text: `‣ ${format(parseISO(match.utcDate), 'MM/dd/yyyy hh:mm a')}`,
-      color: '',
-      size: 12
-    }];
-  }); // Get live matches
+
+  if (scheduledMatches.matches) {
+    scheduledMatches.matches.forEach(match => {
+      scheduledMatchesRender = [...scheduledMatchesRender, {
+        text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
+        size: 14,
+        href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
+      }, {
+        text: `${format(parseISO(match.utcDate), 'MM/dd/yyyy - hh:mm a')}`,
+        size: 14
+      }];
+    });
+  } // Get live matches
+
 
   const liveMatchesResponse = await fetch(`https://api.football-data.org/v2/teams/${OPTIONS.TEAM_ID}/matches?status=LIVE`, apiData);
   const liveMatches = await liveMatchesResponse.json();
   let liveMatchesRender = [];
-  liveMatches.matches.forEach(match => {
-    // Determine winner
-    let winningTeamName = 'Draw';
 
-    if (match.score.winner === 'HOME_TEAM') {
-      winningTeamName = match.homeTeam.name;
-    } else if (match.score.winner === 'AWAY_TEAM') {
-      winningTeamName = match.awayTeam.name;
-    }
+  if (liveMatches.matches) {
+    liveMatches.matches.forEach(match => {
+      // Determine winner
+      let winningTeamName = 'Draw';
 
-    const myTeamIsWinning = winningTeamName === myTeam.name; // Check if there was extra time
+      if (match.score.winner === 'HOME_TEAM') {
+        winningTeamName = match.homeTeam.name;
+      } else if (match.score.winner === 'AWAY_TEAM') {
+        winningTeamName = match.awayTeam.name;
+      }
 
-    const showExtraTime = match.score.extraTime.homeTeam || match.score.extraTime.awayTeam; // Check if there were penalties
+      const myTeamIsWinning = winningTeamName === myTeam.name; // Check if there was extra time
 
-    const showPenalties = match.score.penalties.homeTeam || match.score.penalties.awayTeam; // Render regular scores
+      const showExtraTime = match.score.extraTime.homeTeam || match.score.extraTime.awayTeam; // Check if there were penalties
 
-    const regularScoreRender = `(${match.score.fullTime.homeTeam} - ${match.score.fullTime.awayTeam})`; // Render extra time scores
+      const showPenalties = match.score.penalties.homeTeam || match.score.penalties.awayTeam; // Render regular scores
 
-    const extraTimeRender = `(ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`; // Render extra time scores
+      const regularScoreRender = `(${match.score.fullTime.homeTeam} - ${match.score.fullTime.awayTeam})`; // Render extra time scores
 
-    const penaltiesRender = `(Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
-    liveMatchesRender = [...liveMatchesRender, {
-      text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
-      color: bitbar.darkMode ? 'white' : 'black',
-      size: 14
-    }, {
-      text: `‣ ${winningTeamName} ${regularScoreRender} ${showExtraTime ? extraTimeRender : ''} ${showPenalties ? penaltiesRender : ''}`,
-      color: myTeamIsWinning ? 'green' : winningTeamName === 'Draw' ? '' : 'red',
-      size: 12
-    }];
-  }); // Prepare render sections
+      const extraTimeRender = `(ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`; // Render extra time scores
+
+      const penaltiesRender = `(Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
+      liveMatchesRender = [...liveMatchesRender, {
+        text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
+        size: 14
+      }, {
+        text: `${regularScoreRender}${showExtraTime ? extraTimeRender : ''}${showPenalties ? penaltiesRender : ''}`,
+        size: 13
+      }];
+    });
+  } // Prepare render sections
+
 
   const activeCompetitionsStandingsSection = activeCompetitionsStandingsRender.length ? [bitbar.separator, {
     text: 'Standings',
-    size: 20
+    size: 22
   }, ...activeCompetitionsStandingsRender] : [];
   const finishedMatchesSection = finishedMatchesRender.length ? [bitbar.separator, {
     text: 'Completed Matches',
-    size: 20
+    size: 22
   }, ...finishedMatchesRender] : [];
   const scheduledMatchesSection = scheduledMatchesRender.length ? [bitbar.separator, {
     text: 'Upcoming Matches',
-    size: 20
+    size: 22
   }, ...scheduledMatchesRender] : [];
   const liveMatchesSection = liveMatchesRender.length ? [bitbar.separator, {
     text: 'Live Matches',
-    size: 20
+    size: 22
   }, ...liveMatchesRender] : []; // Render the bitbar dropdown
 
   bitbar([{
     text: '⚽︎',
     // TODO: make a cool logo
-    color: bitbar.darkMode ? OPTIONS.TEAM_COLOR_HEX_DARK_BG : OPTIONS.TEAM_COLOR_HEX_LIGHT_BG,
     dropdown: false
   }, bitbar.separator, {
     text: myTeam.name,
