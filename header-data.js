@@ -17,11 +17,13 @@
 // 2. Get a free API key from https://www.football-data.org/client/register.
 // 3. Configure the USER_OPTIONS object.
 //   - FOOTBALL_DATA_API_KEY: Plug your API key you just got in here.
-//   - TEAM_ID: You must provide a team ID or it will default to spurs (GOAT). Use the a dictionary of *some* teams and their IDs below to find your team's ID.
+//   - TEAM_ID: You must provide a team ID or it will default to my team, Tottenham 😎.
+//     - Use the a dictionary of *some* teams and their IDs below to find your team's ID.
 //   - NUMBER_OF_FINISHED_MATCHES: Retrieve and display how many finished matches?
 //   - NUMBER_OF_SCHEDULED_MATCHES: Retrieve and display how many scheduled matches?
+
 // -----------------------------------------------------------------------------
-// Below are some team id lookup dictionaries.
+// 👀 Below are some team id lookup dictionaries.
 // Search the file to get your team's football-data ID, but don't touch this code.
 // -----------------------------------------------------------------------------
 const NATIONAL_TEAM_IDS = { Argentina: 762, Australia: 779, Belgium: 805, Brazil: 764, Colombia: 818, Costa_Rica: 793, Croatia: 799, Denmark: 782, Egypt: 825, England: 770, France: 773, Germany: 759, Iceland: 1066, Iran: 840, Japan: 766, Korea_Republic: 772, Mexico: 769, Morocco: 815, Nigeria: 776, Panama: 1836, Peru: 832, Poland: 794, Portugal: 765, Russia: 808, Saudi_Arabia: 801, Senegal: 804, Serbia: 780, Spain: 760, Sweden: 792, Switzerland: 788, Tunisia: 802, Uruguay: 758, };
@@ -39,10 +41,11 @@ const MISC_LEAGUE_TEAM_IDS = { AIK_Fotboll: 5277, APOEL: 752, Astana_FK: 1884, B
 const USER_OPTIONS = {
   FOOTBALL_DATA_API_KEY: 'c502bdfa2bfb401f8a13bcf240ae9c47',
   TEAM_ID: ENGLISH_LEAGUE_TEAM_IDS.Tottenham_Hotspur,
-  NUMBER_OF_FINISHED_MATCHES: 4,
+  NUMBER_OF_FINISHED_MATCHES: 5,
   NUMBER_OF_SCHEDULED_MATCHES: 3,
 };
 
 // -----------------------------------------------------------------------------
 // 🚨 You shouldn't need to change anything below this line.
 // -----------------------------------------------------------------------------
+

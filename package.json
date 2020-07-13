@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo 'No tests yet 😢'",
     "dev": "parcel build index.js --out-dir ./temp --target node --bundle-node-modules --no-cache --no-source-maps --no-minify --detailed-report && ./postDevBuild.sh",
-    "build": "parcel build index.js --out-dir ./build --target node --no-source-maps --no-minify --detailed-report && ./postProdBuild.sh"
+    "build": "parcel build index.js --out-dir ./temp --target node --no-source-maps --no-minify --detailed-report && ./postProdBuild.sh"
   },
   "keywords": [
     "soccer",
