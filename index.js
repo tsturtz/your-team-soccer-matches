@@ -5,7 +5,7 @@ const { format, parseISO } = require('date-fns');
 const OPTIONS = {
   FOOTBALL_DATA_API_KEY: USER_OPTIONS && USER_OPTIONS.FOOTBALL_DATA_API_KEY,
   TEAM_ID: USER_OPTIONS && USER_OPTIONS.TEAM_ID || 73,
-  NUMBER_OF_FINISHED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_FINISHED_MATCHES || 4,
+  NUMBER_OF_FINISHED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_FINISHED_MATCHES || 5,
   NUMBER_OF_SCHEDULED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_SCHEDULED_MATCHES || 3,
 };
 
@@ -20,10 +20,11 @@ const OPTIONS = {
   };
 
   // Get team info
-  const myTeamResponse = await fetch(`${apiUrl}/teams/${OPTIONS.TEAM_ID}`, apiData)
+  const myTeamResponse = await fetch(`${apiUrl}/teams/${OPTIONS.TEAM_ID}`, apiData);
   const myTeam = await myTeamResponse.json();
 
   // Get active competitions standings
+  // TODO: WRITE A CATCH HERE TO CATCH UNSUPPORTED (BY THE API) COMPETITIONS
   const activeCompetitionsPromises = myTeam.activeCompetitions.map((comp) => fetch(`${apiUrl}/competitions/${comp.id}/standings?standingType=TOTAL`, apiData));
   const activeCompetitionsPromisesResponses = await Promise.all(activeCompetitionsPromises);
   const activeCompetitionsStandings = await Promise.all(activeCompetitionsPromisesResponses.map((resp) => resp.json()));
@@ -50,6 +51,7 @@ const OPTIONS = {
                 } - ${
                   table.points
                 }`,
+                href: `https://www.google.com/search?q=${table.team.name.split(' ').join('+')}`,
                 ...(table.team.id === OPTIONS.TEAM_ID && { font: 'Helvetica-Bold' }),
               })
             }),
@@ -59,37 +61,55 @@ const OPTIONS = {
     ];
   });
 
-  // Get finished matches
-  // NOTE: I would limit the API request to the requested number of finished matches
-  // but there's no way to get the 4 most recent completed games.
-  const finishedMatchesResponse = await fetch(
-    `${apiUrl}/teams/${OPTIONS.TEAM_ID}/matches?status=FINISHED`,
+  // Get matches
+  const matchesResponse = await fetch(
+    `${apiUrl}/teams/${OPTIONS.TEAM_ID}/matches`,
     apiData
   );
-  const finishedMatches = await finishedMatchesResponse.json();
+  const matchesResponseJson = await matchesResponse.json();
+  const finishedMatches = matchesResponseJson.matches.filter((match) => match.status === 'FINISHED');
+  const scheduledMatches = matchesResponseJson.matches.filter((match) => match.status === 'SCHEDULED');
+  const liveMatches = matchesResponseJson.matches.filter((match) => match.status === 'LIVE');
+
+  // Finished/completed matches
   let finishedMatchesRender = [];
-  if (finishedMatches.matches) {
-    finishedMatches.matches.forEach((match, idx) => {
-      if (idx >= finishedMatches.matches.length - OPTIONS.NUMBER_OF_FINISHED_MATCHES) {
+  if (finishedMatches) {
+    let idx = 0;
+    // Use for..of here instead of forEach because it plays nice with async/await
+    for (match of finishedMatches) {
+      if (idx >= finishedMatches.length - OPTIONS.NUMBER_OF_FINISHED_MATCHES) {
         // Determine winner
         const isDraw = match.score.winner === 'DRAW';
         let winningTeamName = 'Draw';
         if (match.score.winner === 'HOME_TEAM') {
-          winningTeamName = match.homeTeam.name
+          winningTeamName = match.homeTeam.name;
         } else if (match.score.winner === 'AWAY_TEAM') {
-          winningTeamName = match.awayTeam.name
+          winningTeamName = match.awayTeam.name;
         }
         const myTeamWon = winningTeamName === myTeam.name;
+        const myTeamIsHome = match.homeTeam.name === myTeam.name;
+        // Get TLA
+        const opponentTeamId = myTeamIsHome ? match.awayTeam.id : match.homeTeam.id;
+        const opponentTeamResponse = await fetch(`${apiUrl}/teams/${opponentTeamId}`, apiData);
+        const opponentTeam = await opponentTeamResponse.json();
         // Check if there was extra time
         const showExtraTime = (match.score.extraTime.homeTeam || match.score.extraTime.awayTeam);
         // Check if there were penalties
         const showPenalties = (match.score.penalties.homeTeam || match.score.penalties.awayTeam);
         // Render regular scores
-        const regularScoreRender = `${match.score.fullTime.homeTeam} - ${match.score.fullTime.awayTeam}`;
+        const regularScoreRender = `${
+          myTeamIsHome ? myTeam.tla : opponentTeam.tla
+        } ${
+          match.score.fullTime.homeTeam
+        } - ${
+          match.score.fullTime.awayTeam
+        } ${
+          myTeamIsHome ? opponentTeam.tla : myTeam.tla
+        }`;
         // Render extra time scores
-        const extraTimeRender = ` (ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`;
+        const extraTimeRender = `(ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`;
         // Render extra time scores
-        const penaltiesRender = ` (Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
+        const penaltiesRender = `(Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
         finishedMatchesRender = [
           ...finishedMatchesRender,
           {
@@ -98,7 +118,41 @@ const OPTIONS = {
             href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`,
           },
           {
-            text: `${myTeamWon ? '🟢' : isDraw ? '⚪️' : '🔴'} ${regularScoreRender}${showExtraTime ? extraTimeRender : ''}${showPenalties ? penaltiesRender : ''} ${!isDraw ? winningTeamName : 'Draw'}`,
+            text: `${
+              myTeamWon ? '🟢' : isDraw ? '⚪️' : '🔴'
+            } ${
+              regularScoreRender
+            } ${
+              showExtraTime ? extraTimeRender : ''
+            } ${
+              showPenalties ? penaltiesRender : ''
+            }`,
+            size: 14,
+          },
+        ];
+      }
+      idx++;
+    };
+  }
+
+  // Scheduled/upcoming matches
+  let scheduledMatchesRender = [];
+  if (scheduledMatches) {
+    scheduledMatches.forEach((match, idx) => {
+      if (idx < OPTIONS.NUMBER_OF_SCHEDULED_MATCHES) {
+        scheduledMatchesRender = [
+          ...scheduledMatchesRender,
+          {
+            text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
+            size: 14,
+            href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`,
+          },
+          {
+            text: `${match.group} - Match day: ${match.matchday}`,
+            size: 14,
+          },
+          {
+            text: `${format(parseISO(match.utcDate), 'MM/dd/yyyy - hh:mm a')}`,
             size: 14,
           },
         ];
@@ -106,63 +160,24 @@ const OPTIONS = {
     });
   }
 
-  // Get scheduled matches
-  const scheduledMatchesResponse = await fetch(
-    `${apiUrl}/teams/${OPTIONS.TEAM_ID}/matches?status=SCHEDULED&limit=${OPTIONS.NUMBER_OF_SCHEDULED_MATCHES}`,
-    apiData
-  );
-  const scheduledMatches = await scheduledMatchesResponse.json();
-  let scheduledMatchesRender = [];
-  if (scheduledMatches.matches) {
-    scheduledMatches.matches.forEach((match) => {
-      scheduledMatchesRender = [
-        ...scheduledMatchesRender,
+  // Live matches
+  let liveMatchesRender = [];
+  if (liveMatches) {
+    liveMatches.forEach(async (match) => {
+      liveMatchesRender = [
+        ...liveMatchesRender,
         {
           text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
           size: 14,
           href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`,
         },
         {
+          text: `${match.group} - Match day: ${match.matchday}`,
+          size: 14,
+        },
+        {
           text: `${format(parseISO(match.utcDate), 'MM/dd/yyyy - hh:mm a')}`,
           size: 14,
-        },
-      ];
-    });
-  }
-
-  // Get live matches
-  const liveMatchesResponse = await fetch(`https://api.football-data.org/v2/teams/${OPTIONS.TEAM_ID}/matches?status=LIVE`, apiData)
-  const liveMatches = await liveMatchesResponse.json();
-  let liveMatchesRender = [];
-  if (liveMatches.matches) {
-    liveMatches.matches.forEach((match) => {
-      // Determine winner
-      let winningTeamName = 'Draw';
-      if (match.score.winner === 'HOME_TEAM') {
-        winningTeamName = match.homeTeam.name
-      } else if (match.score.winner === 'AWAY_TEAM') {
-        winningTeamName = match.awayTeam.name
-      }
-      const myTeamIsWinning = winningTeamName === myTeam.name;
-      // Check if there was extra time
-      const showExtraTime = (match.score.extraTime.homeTeam || match.score.extraTime.awayTeam);
-      // Check if there were penalties
-      const showPenalties = (match.score.penalties.homeTeam || match.score.penalties.awayTeam);
-      // Render regular scores
-      const regularScoreRender = `(${match.score.fullTime.homeTeam} - ${match.score.fullTime.awayTeam})`;
-      // Render extra time scores
-      const extraTimeRender = `(ET: ${match.score.extraTime.homeTeam} - ${match.score.extraTime.awayTeam})`;
-      // Render extra time scores
-      const penaltiesRender = `(Pen: ${match.score.penalties.homeTeam} - ${match.score.penalties.awayTeam})`;
-      liveMatchesRender = [
-        ...liveMatchesRender,
-        {
-          text: `${match.homeTeam.name} vs. ${match.awayTeam.name}`,
-          size: 14,
-        },
-        {
-          text: `${regularScoreRender}${showExtraTime ? extraTimeRender : ''}${showPenalties ? penaltiesRender : ''}`,
-          size: 13,
         },
       ];
     });
@@ -193,8 +208,8 @@ const OPTIONS = {
   // Render the bitbar dropdown
   bitbar([
     {
-      text: '⚽︎', // TODO: make a cool logo
-      dropdown: false
+      text: `⚽︎ ${myTeam.tla}`,
+      dropdown: false,
     },
     bitbar.separator,
     {

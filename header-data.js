@@ -1,10 +1,10 @@
 #!/usr/bin/env /usr/local/bin/node
 
-// <bitbar.title>Soccer Team Matches</bitbar.title>
+// <bitbar.title>Your Soccer Team</bitbar.title>
 // <bitbar.version>1.0.0</bitbar.version>
 // <bitbar.author>Taylor Sturtz</bitbar.author>
 // <bitbar.author.github>tsturtz</bitbar.author.github>
-// <bitbar.desc>Show standings and match information about your favorite soccer team</bitbar.desc>
+// <bitbar.desc>Show completed/upcoming and LIVE matches as well as competition standings for your favorite soccer team.</bitbar.desc>
 // <bitbar.image>TODO: add image</bitbar.image>
 // <bitbar.dependencies>node</bitbar.dependencies>
 // <bitbar.dependencies.npm>bitbar, node-fetch, date-fns</bitbar.dependencies.npm>
@@ -13,17 +13,20 @@
 // -----------------------------------------------------------------------------
 // 🙋‍♂️ Start here!
 // -----------------------------------------------------------------------------
-// 1. Ensure you have the proper node and npm dependencies installed.
+// 1. Ensure you have the proper node (tested on v12.16.3) and npm dependencies installed.
+//    - npm install -g bitbar node-fetch date-fns
 // 2. Get a free API key from https://www.football-data.org/client/register.
 // 3. Configure the USER_OPTIONS object.
-//   - FOOTBALL_DATA_API_KEY: Plug your API key you just got in here.
-//   - TEAM_ID: You must provide a team ID or it will default to my team, Tottenham 😎.
-//     - Use the a dictionary of *some* teams and their IDs below to find your team's ID.
-//   - NUMBER_OF_FINISHED_MATCHES: Retrieve and display how many finished matches?
-//   - NUMBER_OF_SCHEDULED_MATCHES: Retrieve and display how many scheduled matches?
+//    - FOOTBALL_DATA_API_KEY: Provide your API key you just got here.
+//    - TEAM_ID: Provide your team's ID or it will default to my team, Tottenham 😎.
+//      - Use the a dictionary of *some* teams and their IDs below to find your team's ID.
+//    - NUMBER_OF_FINISHED_MATCHES: The number of completed matches to retrieve and display.
+//      - DEFAULT: 5; MAX: 7;
+//    - NUMBER_OF_SCHEDULED_MATCHES: The number of upcoming matches to retrieve and display.
+//      - DEFAULT: 3; NO MAX;
 
 // -----------------------------------------------------------------------------
-// 👀 Below are some team id lookup dictionaries.
+// 👀 Below are some incomplete but butter-than-nothing team id lookup dictionaries.
 // Search the file to get your team's football-data ID, but don't touch this code.
 // -----------------------------------------------------------------------------
 const NATIONAL_TEAM_IDS = { Argentina: 762, Australia: 779, Belgium: 805, Brazil: 764, Colombia: 818, Costa_Rica: 793, Croatia: 799, Denmark: 782, Egypt: 825, England: 770, France: 773, Germany: 759, Iceland: 1066, Iran: 840, Japan: 766, Korea_Republic: 772, Mexico: 769, Morocco: 815, Nigeria: 776, Panama: 1836, Peru: 832, Poland: 794, Portugal: 765, Russia: 808, Saudi_Arabia: 801, Senegal: 804, Serbia: 780, Spain: 760, Sweden: 792, Switzerland: 788, Tunisia: 802, Uruguay: 758, };
@@ -40,7 +43,7 @@ const MISC_LEAGUE_TEAM_IDS = { AIK_Fotboll: 5277, APOEL: 752, Astana_FK: 1884, B
 // -----------------------------------------------------------------------------
 const USER_OPTIONS = {
   FOOTBALL_DATA_API_KEY: 'c502bdfa2bfb401f8a13bcf240ae9c47',
-  TEAM_ID: ENGLISH_LEAGUE_TEAM_IDS.Tottenham_Hotspur,
+  TEAM_ID: ENGLISH_LEAGUE_TEAM_IDS.Manchester_United,
   NUMBER_OF_FINISHED_MATCHES: 5,
   NUMBER_OF_SCHEDULED_MATCHES: 3,
 };
