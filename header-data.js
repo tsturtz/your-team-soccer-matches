@@ -41,7 +41,7 @@ const MISC_LEAGUE_TEAM_IDS = { AIK_Fotboll: 5277, APOEL: 752, Astana_FK: 1884, B
 // ✍️ CONFIGURE API KEY AND OPTIONS HERE!
 // -----------------------------------------------------------------------------
 const USER_OPTIONS = {
-  FOOTBALL_DATA_API_KEY: 'c502bdfa2bfb401f8a13bcf240ae9c47',
+  FOOTBALL_DATA_API_KEY: '',
   TEAM_ID: ITALY_LEAGUE_TEAM_IDS.Juventus,
   NUMBER_OF_FINISHED_MATCHES: 5,
   NUMBER_OF_SCHEDULED_MATCHES: 3,
