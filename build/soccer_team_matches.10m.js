@@ -5,7 +5,7 @@
 // <bitbar.author>Taylor Sturtz</bitbar.author>
 // <bitbar.author.github>tsturtz</bitbar.author.github>
 // <bitbar.desc>Show completed/upcoming and LIVE matches as well as competition standings for your favorite soccer team.</bitbar.desc>
-// <bitbar.image>TODO: add image</bitbar.image>
+// <bitbar.image>https://raw.githubusercontent.com/tsturtz/your-team-soccer-matches/master/your-team-soccer-matches.jpg</bitbar.image>
 // <bitbar.dependencies>node,npm/bitbar,npm/date-fns,npm/node-fetch</bitbar.dependencies>
 // <bitbar.abouturl>https://github.com/tsturtz/your-team-soccer-matches</bitbar.abouturl>
 
