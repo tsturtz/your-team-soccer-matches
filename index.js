@@ -9,6 +9,10 @@ const OPTIONS = {
   NUMBER_OF_SCHEDULED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_SCHEDULED_MATCHES || 3,
 };
 
+if (OPTIONS.NUMBER_OF_FINISHED_MATCHES > 7) {
+  OPTIONS.NUMBER_OF_FINISHED_MATCHES = 7;
+}
+
 (async () => {
   const apiUrl = 'https://api.football-data.org/v2';
   const apiData = {
@@ -24,8 +28,11 @@ const OPTIONS = {
   const myTeam = await myTeamResponse.json();
 
   // Get active competitions standings
-  // TODO: WRITE A CATCH HERE TO CATCH UNSUPPORTED (BY THE API) COMPETITIONS
-  const activeCompetitionsPromises = myTeam.activeCompetitions.map((comp) => fetch(`${apiUrl}/competitions/${comp.id}/standings?standingType=TOTAL`, apiData));
+  // NOTE: The free API only supports some competitions: https://www.football-data.org/coverage
+  const supportedCompetitions = new Set(['BSA', 'PL', 'ELC', 'CL', 'EC', 'FL1', 'BL1', 'SA', 'DED', 'PPL', 'PD', 'WC']);
+  const activeCompetitionsPromises = myTeam.activeCompetitions
+    .filter((comp) => supportedCompetitions.has(comp.code))
+    .map((comp) => fetch(`${apiUrl}/competitions/${comp.code}/standings?standingType=TOTAL`, apiData));
   const activeCompetitionsPromisesResponses = await Promise.all(activeCompetitionsPromises);
   const activeCompetitionsStandings = await Promise.all(activeCompetitionsPromisesResponses.map((resp) => resp.json()));
   let activeCompetitionsStandingsRender = [];
@@ -148,7 +155,7 @@ const OPTIONS = {
             href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`,
           },
           {
-            text: `${match.group} - Match day: ${match.matchday}`,
+            text: `${match.competition.name} - ${match.group || match.stage}${match.matchday ? ` - Match day: ${match.matchday}` : ''}`,
             size: 14,
           },
           {
@@ -172,12 +179,13 @@ const OPTIONS = {
           href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`,
         },
         {
-          text: `${match.group} - Match day: ${match.matchday}`,
+          text: `${match.competition.name} - ${match.group || match.stage}${match.matchday ? ` - Match day: ${match.matchday}` : ''}`,
           size: 14,
         },
         {
-          text: `${format(parseISO(match.utcDate), 'MM/dd/yyyy - hh:mm a')}`,
+          text: 'Click here to check the score',
           size: 14,
+          href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`,
         },
       ];
     });
@@ -188,22 +196,38 @@ const OPTIONS = {
     bitbar.separator,
     { text: 'Standings', size: 22 },
     ...activeCompetitionsStandingsRender,
-  ] : [];
+  ] : [
+    bitbar.separator,
+    { text: 'Standings', size: 22 },
+    { text: 'No active competitions.', size: 14 },
+  ];
   const finishedMatchesSection = finishedMatchesRender.length ? [
     bitbar.separator,
     { text: 'Completed Matches', size: 22 },
     ...finishedMatchesRender,
-  ] : [];
+  ] : [
+    bitbar.separator,
+    { text: 'Completed Matches', size: 22 },
+    { text: 'No recently completed matches.', size: 14 },
+  ];
   const scheduledMatchesSection = scheduledMatchesRender.length ? [
     bitbar.separator,
     { text: 'Upcoming Matches', size: 22 },
     ...scheduledMatchesRender,
-  ] : [];
+  ] : [
+    bitbar.separator,
+    { text: 'Upcoming Matches', size: 22 },
+    { text: 'No upcoming matches.', size: 14 },
+  ];
   const liveMatchesSection = liveMatchesRender.length ? [
     bitbar.separator,
     { text: 'Live Matches', size: 22 },
     ...liveMatchesRender,
-  ] : [];
+  ] : [
+    bitbar.separator,
+    { text: 'Live Matches', size: 22 },
+    { text: 'No live matches right now.', size: 14 },
+  ];
 
   // Render the bitbar dropdown
   bitbar([
