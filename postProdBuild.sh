@@ -9,9 +9,9 @@ rm -r build
 rm -r .cache
 
 echo "‣ Prepending header-data (shebang, birbar meta data, user config) to index.js..."
-echo -e "‣ Moving and renaming index.js to ${LIGHT_BLUE}soccer_team_matches.10m.js${NC} in build directory..."
+echo -e "‣ Moving and renaming index.js to ${LIGHT_BLUE}your-team-soccer-matches.10m.js${NC} in build directory..."
 mkdir ./build
-cat ./header-data.js ./temp/index.js >> ./build/soccer_team_matches.10m.js
+cat ./header-data.js ./temp/index.js >> ./build/your-team-soccer-matches.10m.js
 
 echo "‣ Cleaning up..."
 rm -r temp

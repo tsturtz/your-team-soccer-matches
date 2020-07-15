@@ -42,7 +42,7 @@ const MISC_LEAGUE_TEAM_IDS = { AIK_Fotboll: 5277, APOEL: 752, Astana_FK: 1884, B
 // -----------------------------------------------------------------------------
 const USER_OPTIONS = {
   FOOTBALL_DATA_API_KEY: '',
-  TEAM_ID: ITALY_LEAGUE_TEAM_IDS.Juventus,
+  TEAM_ID: ENGLISH_LEAGUE_TEAM_IDS.Tottenham_Hotspur,
   NUMBER_OF_FINISHED_MATCHES: 5,
   NUMBER_OF_SCHEDULED_MATCHES: 3,
 };
