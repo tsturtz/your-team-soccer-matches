@@ -1,24 +1,23 @@
 #!/usr/bin/env /usr/local/bin/node
 
-// <bitbar.title>Your Soccer Team</bitbar.title>
-// <bitbar.version>1.0.0</bitbar.version>
+// <bitbar.title>Your Team: Soccer Matches</bitbar.title>
+// <bitbar.version>v1.0</bitbar.version>
 // <bitbar.author>Taylor Sturtz</bitbar.author>
 // <bitbar.author.github>tsturtz</bitbar.author.github>
 // <bitbar.desc>Show completed/upcoming and LIVE matches as well as competition standings for your favorite soccer team.</bitbar.desc>
 // <bitbar.image>TODO: add image</bitbar.image>
-// <bitbar.dependencies>node</bitbar.dependencies>
-// <bitbar.dependencies.npm>bitbar, node-fetch, date-fns</bitbar.dependencies.npm>
-// <bitbar.abouturl>https://github.com/tsturtz/bitbar-soccer-matches</bitbar.abouturl>
+// <bitbar.dependencies>node,npm/bitbar,npm/date-fns,npm/node-fetch</bitbar.dependencies>
+// <bitbar.abouturl>https://github.com/tsturtz/your-team-soccer-matches</bitbar.abouturl>
 
 // -----------------------------------------------------------------------------
 // 🙋‍♂️ Start here!
 // -----------------------------------------------------------------------------
 // 1. Ensure you have the proper node (tested on v12.16.3) and npm dependencies installed.
-//    - npm install -g bitbar node-fetch date-fns
+//    - npm install --global bitbar node-fetch date-fns
 // 2. Get a free API key from https://www.football-data.org/client/register.
 // 3. Configure the USER_OPTIONS object.
 //    - FOOTBALL_DATA_API_KEY: Provide your API key you just got here.
-//    - TEAM_ID: Provide your team's ID or it will default to my team, Tottenham 😎.
+//    - TEAM_ID: Provide an accurate TEAM_ID or it will default to my team, Tottenham 😎.
 //      - Use the a dictionary of *some* teams and their IDs below to find your team's ID.
 //    - NUMBER_OF_FINISHED_MATCHES: The number of completed matches to retrieve and display.
 //      - DEFAULT: 5; MAX: 7;
@@ -42,8 +41,8 @@ const MISC_LEAGUE_TEAM_IDS = { AIK_Fotboll: 5277, APOEL: 752, Astana_FK: 1884, B
 // ✍️ CONFIGURE API KEY AND OPTIONS HERE!
 // -----------------------------------------------------------------------------
 const USER_OPTIONS = {
-  FOOTBALL_DATA_API_KEY: 'c502bdfa2bfb401f8a13bcf240ae9c47',
-  TEAM_ID: ENGLISH_LEAGUE_TEAM_IDS.Manchester_United,
+  FOOTBALL_DATA_API_KEY: '',
+  TEAM_ID: ITALY_LEAGUE_TEAM_IDS.Juventus,
   NUMBER_OF_FINISHED_MATCHES: 5,
   NUMBER_OF_SCHEDULED_MATCHES: 3,
 };
@@ -194,6 +193,10 @@ const OPTIONS = {
   NUMBER_OF_SCHEDULED_MATCHES: USER_OPTIONS && USER_OPTIONS.NUMBER_OF_SCHEDULED_MATCHES || 3
 };
 
+if (OPTIONS.NUMBER_OF_FINISHED_MATCHES > 7) {
+  OPTIONS.NUMBER_OF_FINISHED_MATCHES = 7;
+}
+
 (async () => {
   const apiUrl = 'https://api.football-data.org/v2';
   const apiData = {
@@ -206,8 +209,10 @@ const OPTIONS = {
 
   const myTeamResponse = await fetch(`${apiUrl}/teams/${OPTIONS.TEAM_ID}`, apiData);
   const myTeam = await myTeamResponse.json(); // Get active competitions standings
+  // NOTE: The free API only supports some competitions: https://www.football-data.org/coverage
 
-  const activeCompetitionsPromises = myTeam.activeCompetitions.map(comp => fetch(`${apiUrl}/competitions/${comp.id}/standings?standingType=TOTAL`, apiData));
+  const supportedCompetitions = new Set(['BSA', 'PL', 'ELC', 'CL', 'EC', 'FL1', 'BL1', 'SA', 'DED', 'PPL', 'PD', 'WC']);
+  const activeCompetitionsPromises = myTeam.activeCompetitions.filter(comp => supportedCompetitions.has(comp.code)).map(comp => fetch(`${apiUrl}/competitions/${comp.code}/standings?standingType=TOTAL`, apiData));
   const activeCompetitionsPromisesResponses = await Promise.all(activeCompetitionsPromises);
   const activeCompetitionsStandings = await Promise.all(activeCompetitionsPromisesResponses.map(resp => resp.json()));
   let activeCompetitionsStandingsRender = [];
@@ -299,7 +304,7 @@ const OPTIONS = {
           size: 14,
           href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
         }, {
-          text: `${match.group} - Match day: ${match.matchday}`,
+          text: `${match.competition.name} - ${match.group || match.stage}${match.matchday ? ` - Match day: ${match.matchday}` : ''}`,
           size: 14
         }, {
           text: `${format(parseISO(match.utcDate), 'MM/dd/yyyy - hh:mm a')}`,
@@ -319,11 +324,12 @@ const OPTIONS = {
         size: 14,
         href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
       }, {
-        text: `${match.group} - Match day: ${match.matchday}`,
+        text: `${match.competition.name} - ${match.group || match.stage}${match.matchday ? ` - Match day: ${match.matchday}` : ''}`,
         size: 14
       }, {
-        text: `${format(parseISO(match.utcDate), 'MM/dd/yyyy - hh:mm a')}`,
-        size: 14
+        text: 'Click here to check the score',
+        size: 14,
+        href: `https://www.google.com/search?q=${match.homeTeam.name.split(' ').join('+')}+vs.+${match.awayTeam.name.split(' ').join('+')}`
       }];
     });
   } // Prepare render sections
@@ -332,19 +338,43 @@ const OPTIONS = {
   const activeCompetitionsStandingsSection = activeCompetitionsStandingsRender.length ? [bitbar.separator, {
     text: 'Standings',
     size: 22
-  }, ...activeCompetitionsStandingsRender] : [];
+  }, ...activeCompetitionsStandingsRender] : [bitbar.separator, {
+    text: 'Standings',
+    size: 22
+  }, {
+    text: 'No active competitions.',
+    size: 14
+  }];
   const finishedMatchesSection = finishedMatchesRender.length ? [bitbar.separator, {
     text: 'Completed Matches',
     size: 22
-  }, ...finishedMatchesRender] : [];
+  }, ...finishedMatchesRender] : [bitbar.separator, {
+    text: 'Completed Matches',
+    size: 22
+  }, {
+    text: 'No recently completed matches.',
+    size: 14
+  }];
   const scheduledMatchesSection = scheduledMatchesRender.length ? [bitbar.separator, {
     text: 'Upcoming Matches',
     size: 22
-  }, ...scheduledMatchesRender] : [];
+  }, ...scheduledMatchesRender] : [bitbar.separator, {
+    text: 'Upcoming Matches',
+    size: 22
+  }, {
+    text: 'No upcoming matches.',
+    size: 14
+  }];
   const liveMatchesSection = liveMatchesRender.length ? [bitbar.separator, {
     text: 'Live Matches',
     size: 22
-  }, ...liveMatchesRender] : []; // Render the bitbar dropdown
+  }, ...liveMatchesRender] : [bitbar.separator, {
+    text: 'Live Matches',
+    size: 22
+  }, {
+    text: 'No live matches right now.',
+    size: 14
+  }]; // Render the bitbar dropdown
 
   bitbar([{
     text: `⚽︎ ${myTeam.tla}`,
