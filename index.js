@@ -76,7 +76,9 @@ if (OPTIONS.NUMBER_OF_FINISHED_MATCHES > 7) {
   const matchesResponseJson = await matchesResponse.json();
   const finishedMatches = matchesResponseJson.matches.filter((match) => match.status === 'FINISHED');
   const scheduledMatches = matchesResponseJson.matches.filter((match) => match.status === 'SCHEDULED');
-  const liveMatches = matchesResponseJson.matches.filter((match) => match.status === 'LIVE');
+  const liveMatches = matchesResponseJson.matches.filter((match) =>
+    match.status === 'LIVE' || match.status === 'IN_PLAY' || match.status === 'PAUSED'
+  );
 
   // Finished/completed matches
   let finishedMatchesRender = [];
