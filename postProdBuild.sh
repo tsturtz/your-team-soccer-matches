@@ -13,6 +13,9 @@ echo -e "‣ Moving and renaming index.js to ${LIGHT_BLUE}your-team-soccer-match
 mkdir ./build
 cat ./header-data.js ./temp/index.js >> ./build/your-team-soccer-matches.10m.js
 
+echo "‣ Granting execution access..."
+chmod +x ./build/your-team-soccer-matches.10m.js
+
 echo "‣ Cleaning up..."
 rm -r temp
 
