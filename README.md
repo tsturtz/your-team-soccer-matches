@@ -4,4 +4,4 @@
 
 ![Your Team: Soccer Matches](https://raw.githubusercontent.com/tsturtz/your-team-soccer-matches/master/your-team-soccer-matches.jpg)
 
-_This is a [bitbar](https://getbitbar.com/) plugin built in node that relies heavily on the awesome [football-data API](https://www.football-data.org/)._
+_This is a [bitbar](https://getbitbar.com/) plugin built in node and uses the awesome [football-data API](https://www.football-data.org/)._
